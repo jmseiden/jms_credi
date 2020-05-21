@@ -15,6 +15,8 @@
 # interactive = FALSE
 # data = input_df
 
+library(tidyverse)
+
 score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE){
 
 
@@ -47,7 +49,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE){
     if (!endsWith(tolower(csv_file), ".csv")){stop("Selected file is not a .csv file.", call. = FALSE)}
     csv_wd = paste(strsplit(csv_file,"/")[[1]][-length(strsplit(csv_file,"/")[[1]])],collapse = "/")
     setwd(csv_wd)
-    input_df = read.csv(file = csv_file)
+    input_df = read_csv(file = csv_file)
   } else {
     input_df = data
   }
@@ -208,7 +210,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE){
     out_csv = paste(strsplit(out_dlgDir$res,"/")[[1]],collapse = "/")
 
     if (!endsWith(out_csv,".csv")){out_csv = paste(out_csv, ".csv", sep = "")}
-    write.csv(output_df, file = out_csv, row.names = FALSE)
+    write_csv(output_df, file = out_csv, row.names = FALSE)
 
     log[length(log)+1] = paste("\n Scores written to ", out_csv,".", sep = "")
 

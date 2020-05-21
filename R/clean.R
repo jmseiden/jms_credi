@@ -27,9 +27,8 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
 
   stop = 0
 
-
-
   names(input_df) = toupper(names(input_df))
+  
   # Ensure that there is a unique ID variable for each observations
   if (!"ID"%in%names(input_df)){
     stop = 1
@@ -41,7 +40,8 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
     stop_message = "\n* Error: Values of ID variable missing for some observations. Each observation must have a unique ID value."
     log[[length(log)+1]] = stop_message
   }
-  if (length(unique(input_df$ID))<nrow(input_df)){
+  
+  if (n_distinct(input_df$ID) != length(input_df$ID)){
     stop = 1
     stop_message = "\n* Error: Values of ID are not unique across observations. Construct a unique identifier and re-run."
     log[[length(log)+1]] = stop_message
