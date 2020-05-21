@@ -199,7 +199,8 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE){
   names(Z_SF) = "z_OVERALL"
 
   # Put in the input
-  output_df = cbind(data.frame(ID = cleaned_df$ID), Z_LF, Z_SF, MAP_LF, MAP_SF,SE_LF, SE_SF)
+  output_scored = cbind(data.frame(ID = cleaned_df$ID), Z_LF, Z_SF, MAP_LF, MAP_SF,SE_LF, SE_SF)
+  output_df = merge(x = output_scored, y = inputdf, by = "ID") #re-merge with original data.
 
   # Write out the data
   if(interactive == TRUE){
