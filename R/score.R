@@ -5,23 +5,28 @@
 #' @param reverse_code (Logical) Defaults to TRUE. If TRUE, then reverse coding is automated to appropriately handle the negatively worded items LF9, LF102, LFMH1, LFMH2, LFMH3, LFMH4, LFMH5, LFMH7, LFMH8, & LFMH9. If FALSE, then no reverse coding is applied.
 #' @param interactive (Logical) Defaults to TRUE. If TRUE, the user may be prompted with caution messages regarding whether scoring should be continued, where to save the scores, where to save a logfile, etc. If FALSE, continuation is assumed and scores and the user is not prompted to save scores or a logfile.
 #' @keywords CREDI
+#' @importFrom magrittr %>%
+#' @importFrom readr read_csv
+#' @importFrom readr write_csv
+#' @importFrom dplyr case_when
+#' @importFrom dplyr mutate
+#' @importFrom dplyr filter
+#' @importFrom dplyr select
+#' @importFrom dplyr n_distinct
+#' @importFrom tibble rownames_to_column
 #' @export
 #' @examples
 #' score()
 
-#
 # reverse_code = FALSE
 # save_logfile = TRUE
 # interactive = FALSE
 # data = input_df
 
-library(tidyverse)
-
 score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE){
 
-
-
   # Identify if dialog specifying .csv file should be bypassed.
+
   bypass = ifelse(is.null(data), FALSE, TRUE)
   if (bypass == TRUE){
     if (!is.data.frame(data)){
@@ -49,7 +54,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE){
     if (!endsWith(tolower(csv_file), ".csv")){stop("Selected file is not a .csv file.", call. = FALSE)}
     csv_wd = paste(strsplit(csv_file,"/")[[1]][-length(strsplit(csv_file,"/")[[1]])],collapse = "/")
     setwd(csv_wd)
-    input_df = read_csv(file = csv_file)
+    input_df = readr::read_csv(file = csv_file, col_types = readr::cols())
   } else {
     input_df = data
   }
@@ -163,7 +168,6 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE){
       Z_SF[i,1] = weighted.mean(Z_LF[i,], w = (1./SE_LF[i,])^2)
     }
 
-
     # # Score the short form
     # out_SF = optim(par = as.vector(THETA0_SF[i,]),
     #                fn = sf_posterior_density,
@@ -202,7 +206,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE){
 
   # Put in the input
   output_scored = cbind(data.frame(ID = cleaned_df$ID), Z_LF, Z_SF, MAP_LF, MAP_SF,SE_LF, SE_SF)
-  output_df = merge(x = output_scored, y = inputdf, by = "ID") #re-merge with original data.
+  output_df = merge(x = input_df, y = output_scored, by = "ID") #re-merge with original data.
 
   # Write out the data
   if(interactive == TRUE){
@@ -210,7 +214,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE){
     out_csv = paste(strsplit(out_dlgDir$res,"/")[[1]],collapse = "/")
 
     if (!endsWith(out_csv,".csv")){out_csv = paste(out_csv, ".csv", sep = "")}
-    write_csv(output_df, file = out_csv, row.names = FALSE)
+    readr::write_csv(output_df, path = out_csv)
 
     log[length(log)+1] = paste("\n Scores written to ", out_csv,".", sep = "")
 
@@ -220,7 +224,6 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE){
 
     writeLines("\n")
     writeLines( paste("\n Scores written to ", out_csv,".", sep = "") )
-
 
   }
 

@@ -1,0 +1,12 @@
+------------------------------------
+Log for CREDI Scoring Messages
+Date: 2020-05-21 16:04:12
+------------------------------------
+
+* Warning: The following variables will be ignored during scoring: TOTAL, RANDOM NUMBER
+[[1]]
+[1] "\n* Error: AGE and all item response variables must be in numeric format. At least one of these variables may contain non-numeric values:"
+
+$var
+[1] "LF18" "LF20"
+

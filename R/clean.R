@@ -28,7 +28,7 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
   stop = 0
 
   names(input_df) = toupper(names(input_df))
-  
+
   # Ensure that there is a unique ID variable for each observations
   if (!"ID"%in%names(input_df)){
     stop = 1
@@ -40,8 +40,8 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
     stop_message = "\n* Error: Values of ID variable missing for some observations. Each observation must have a unique ID value."
     log[[length(log)+1]] = stop_message
   }
-  
-  if (n_distinct(input_df$ID) != length(input_df$ID)){
+
+  if (dplyr::n_distinct(input_df$ID) != length(input_df$ID)){
     stop = 1
     stop_message = "\n* Error: Values of ID are not unique across observations. Construct a unique identifier and re-run."
     log[[length(log)+1]] = stop_message
@@ -155,24 +155,41 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
   # Finally recode the variable
   names(input_df) = rename_df$new
 
-  # Check that all variables outside of ID are numeric
-  not_numeric = NULL
-  for (j in seq(1,ncol(input_df))){
-    if(names(input_df)[j]!="ID"){
-      if (sum(is.na(input_df[,j]))!=length(input_df[,j])) {
-        if( !is.numeric(input_df[,j]) ){
-          new_name = names(input_df)[j]
-          old_name = rename_df$orig[rename_df$new == new_name]
-          not_numeric = c(not_numeric,old_name)
-        }
-      }
-    }
-  }
-  if (!is.null(not_numeric)){
+
+  # Check that all variables outside of ID and ignored variables are numeric
+  classes <- as.data.frame(sapply(input_df, class)) %>%
+    tibble::rownames_to_column(var = "variable")
+    names(classes) <- c("var", "var.class")
+
+  classes <- classes %>%
+    dplyr::mutate(check.var = var %in% vecQnames) %>%
+    dplyr::mutate(problem = dplyr::case_when(check.var == TRUE &
+                                 var.class != "numeric"  &
+                                 var != "ID" ~ TRUE))
+  not_numeric <- classes %>%
+    dplyr::filter(problem == TRUE) %>%
+    dplyr::select(var)
+
+  # #I AM CONFUSED WHAT IS HAPPENING HERE. Something is causing consistent errors here.
+
+  # not_numeric = NULL
+  # for (j in seq(1,ncol(input_df))){
+  #   if(names(input_df)[j]!="ID"){
+  #     if (sum(is.na(input_df[,j]))!=length(input_df[,j])) {
+  #       if( !is.numeric(input_df[,j]) ){
+  #         new_name = names(input_df)[j]
+  #         old_name = rename_df$orig[rename_df$new == new_name]
+  #         not_numeric = c(not_numeric,old_name)
+  #       }
+  #     }
+  #   }
+  # }
+
+
+  if (sum(classes$problem, na.rm = TRUE)>0){
     stop = 1
     stop_message = "\n* Error: AGE and all item response variables must be in numeric format. At least one of these variables may contain non-numeric values:"
-    log[[length(log)+1]] = c(stop_message,
-                             paste(not_numeric, collapse = ", ") )
+    log[[length(log)+1]] = c(stop_message, not_numeric)
   }
 
   if (stop == 1){
@@ -201,7 +218,6 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
     rows_out_age = which(input_df$AGE<0 | input_df$AGE>36)
     if (length(rows_out_age)>0){
       log[[length(log)+1]] =
-        paste("\n* Warning:  The following ", length(rows_out_age) ," observation(s) cannot be scored because the AGE values are outside of 0-36 months: (ID = ", paste(input_df$ID[rows_out_age], collapse = ", "),")", sep = "")
       dr = dr+1; discard_df$Reason[dr] = "Age values outside of 0-36 months"; discard_df$Number[dr] = length(rows_out_age)
       input_df = input_df[-rows_out_age, ]
     }
