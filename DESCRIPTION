@@ -1,4 +1,4 @@
-Package: {{ Package }}
+Package: jms_credi
 Title: JMS-CREDI Scoring
 Version: 2.0.0
 Authors@R: 
