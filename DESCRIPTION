@@ -1,14 +1,14 @@
-Package: jmscredi
+Package: jms_credi
 Title: JMS - CREDI Scoring
-Version: 2.0.0
-Authors@R: person("Marcus","Waldman", role = c("aut", "cre"), email = "marcus.waldman@unmc.edu")
-Author: Marcus Waldman <marcus_waldman@unmc.edu>
-Maintainer: Marcus Waldman <marcus_waldman@unmc.edu>
+Version: 1.0.5
+Authors@R: person("Marcus","Waldman", role = c("aut", "cre"), email = "marcus_waldman@gse.harvard.edu")
+Author: Marcus R. Waldman <marcus_waldman@gse.harvard.edu>
+Maintainer: Marcus Waldman <marcus_waldman@gse.harvard.edu>
 Description: This function scores CREDI response data.
 License: MIT
 URL: https://sites.sph.harvard.edu/credi/
 Depends: R (>= 3.5.0)
-Imports: tidyverse (>= 1.3.0), svDialogs (>= 1.0.0), stats (>= 3.5.0), magrittr, readr, dplyr
+Imports: svDialogs (>= 1.0.0), stats (>= 3.5.0), magrittr, readr, dplyr
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1
