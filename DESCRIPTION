@@ -1,6 +1,6 @@
 Package: jmscredi
 Title: JMS - CREDI Scoring
-Version: 2.0.0.Beta
+Version: 2.0.0
 Authors@R: person("Marcus","Waldman", role = c("aut", "cre"), email = "marcus.waldman@unmc.edu")
 Authors@R: person("Jonathan","Seiden", role = c("aut"), email = "jseiden@g.harvard.edu")
 Author: Marcus Waldman <marcus_waldman@unmc.edu>
