@@ -4,6 +4,7 @@
 #' @param data (data.frame) Defaults to NULL. Response data. If NULL, then user is prompted to identify a .csv file with response data. Defaults to NULL.
 #' @param reverse_code (Logical) Defaults to TRUE. If TRUE, then reverse coding is automated to appropriately handle the negatively worded items LF9, LF102, LFMH1, LFMH2, LFMH3, LFMH4, LFMH5, LFMH7, LFMH8, & LFMH9. If FALSE, then no reverse coding is applied.
 #' @param interactive (Logical) Defaults to TRUE. If TRUE, the user may be prompted with caution messages regarding whether scoring should be continued, where to save the scores, where to save a logfile, etc. If FALSE, continuation is assumed and scores and the user is not prompted to save scores or a logfile.
+#' @param min_items (integer) Default to 5. The minimum number of scale-specific items (e.g., SF, MOT, etc.) required for a score to be calculated. 
 #' @keywords CREDI
 #' @importFrom magrittr %>%
 #' @importFrom readr read_csv
@@ -23,7 +24,7 @@
 # interactive = FALSE
 # data = input_df
 
-score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE){
+score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items = 5){
 
   # Identify if dialog specifying .csv file should be bypassed.
 
@@ -114,6 +115,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE){
   }
 
 
+
   # Obtain necessary constants
   J = ncol(Y);
   K = 4L
@@ -130,61 +132,113 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE){
   # Conduct the optimization
   MAP_LF = 0.*THETA0_LF + NA
   MAP_SF = 0.*THETA0_SF + NA
+  MAP_OVERALL = 0.*THETA0_SF + NA
   Z_LF = MAP_LF
-  Z_SF = MAP_SF
   SE_LF = MAP_LF
   SE_SF = MAP_SF
+  SE_OVERALL = MAP_OVERALL
+  NOTES = rep("", nrow(Y))
   writeLines(paste("\nScoring ", N, " observations:"))
   pb<-txtProgressBar(min = 0, max = N, initial = 0, style = 3)
+#i = 1
   for (i in 1:N){
 
-    # Obtain the standardized estimates
-    center_i = X_4[i,] %*% as.matrix(normcoef_mean)
-    scale_i =  X_4[i,] %*% as.matrix(normcoef_sd)
-
-    # Score the long form
-    out_LF = optim(par = as.vector(THETA0_LF[i,]),
-                   fn = lf_posterior_density,
-                   gr = lf_grad_posterior_density,
-                   Yi = as.vector(Y[i,]),
-                   MUi = as.vector(MU_LF[i,]),
-                   invS =invS,
-                   TAU = TAU,
-                   LAMBDA = LAMBDA,
-                   J = J,
-                   K = K,
-                   method = "BFGS",
-                   hessian = TRUE)
-    if(out_LF$convergence == 0){
-      MAP_LF[i,] = out_LF$par
-      fisherInfo = out_LF$hessian
-      SE_LF[i,] = sqrt(diag(solve(fisherInfo,diag(K))))
-
-      Z_LF[i,1:4] = (MAP_LF[i,]+50-center_i[1,1:4])/scale_i[1,1:4]
-
-      # Average of the scores (note that the _SF is misleading b/c it is not on the same scale as short form)
-      MAP_SF[i, 1] = mean(out_LF$par)
-      SE_SF[i,1] = (1/1)*(1/sqrt(sum(sum(out_LF$hessian))))
-      Z_SF[i,1] = weighted.mean(Z_LF[i,], w = (1./SE_LF[i,])^2)
+    scales_i = which_scores(Y[i,], mest_df)
+    notes_i = NULL
+    if(prod(as.numeric(scales_i[1,]))==0){
+      notes_i = paste0("The following scales did not have at least ", min_items," responses: ", paste0(names(scales_i)[scales_i[1,]==FALSE], collapse = ", "),"." )
+    } 
+    
+    
+    #Calculate short form scores, as appropriate
+    if(scales_i$SF==TRUE){
+      
+      js_SF = which(names(Y[i,]) %in% mest_df[mest_df$ShortForm==TRUE,"CREDI_code"])
+      out_SF = optim(par = as.vector(THETA0_SF[i,]), 
+                          fn = sf_posterior_density, 
+                          Yi = as.vector(Y[i,js_SF]),
+                          MUi = as.vector(MU_SF[i,]),
+                          SIGMA_SQi = as.numeric(SIGMA_SQ[i]),
+                          DELTA = as.vector(DELTA)[js_SF],
+                          ALPHA = as.vector(ALPHA)[js_SF],
+                          J = length(js_SF), #as.integer(J),
+                          method = "BFGS",
+                          hessian = TRUE)
+      
+      if(out_SF$convergence==0){ #If converged, produce score.
+        MAP_SF[i,] = out_SF$par
+        SE_SF[i,] = 1/sqrt(out_SF$hessian)
+      }  else {
+        notes_i = paste0(notes_i, " Scoring procedure for SF scale did not converge; SF score not provided.")
+      }
     }
-
-    # # Score the short form
-    # out_SF = optim(par = as.vector(THETA0_SF[i,]),
-    #                fn = sf_posterior_density,
-    #                Yi = as.vector(Y[i,]),
-    #                MUi = as.vector(MU_SF[i,]),
-    #                SIGMA_SQi = as.numeric(SIGMA_SQ[i]),
-    #                DELTA = as.vector(DELTA),
-    #                ALPHA = as.vector(ALPHA),
-    #                J = as.integer(J),
-    #                method = "BFGS",
-    #                hessian = TRUE)
-    # if(out_SF$convergence == 0){
-    #   MAP_SF[i,] = out_SF$par
-    #   SE_SF[i,] = sqrt(1.0/out_SF$hessian)
-    #   Z_SF[i,1] = (MAP_SF[i,]+50-center_i[1,5])/scale_i[1,5]
-    # }
-
+    
+    # Calculate an overall score
+    if(scales_i$OVERALL==TRUE){
+      
+      js_OVERALL = which(names(Y[i,]) %in% mest_df[mest_df$alpha>0,"CREDI_code"])
+      out_OVERALL = optim(par = as.vector(THETA0_SF[i,]), 
+                          fn = sf_posterior_density, 
+                          Yi = as.vector(Y[i,js_OVERALL]),
+                          MUi = as.vector(MU_SF[i,]),
+                          SIGMA_SQi = as.numeric(SIGMA_SQ[i]),
+                          DELTA = as.vector(DELTA)[js_OVERALL],
+                          ALPHA = as.vector(ALPHA)[js_OVERALL],
+                          J = length(js_OVERALL), #as.integer(J),
+                          method = "BFGS",
+                          hessian = TRUE)
+      
+      if(out_OVERALL$convergence==0){ #If converged, produce score.
+        MAP_OVERALL[i,] = out_OVERALL$par
+        SE_OVERALL[i,] = 1/sqrt(out_OVERALL$hessian)
+      } else {
+        notes_i = paste0(notes_i, " Scoring procedure for OVERALL scale did not converge; OVERALL score not produced.")
+      }
+      
+      
+    }
+    
+    # Calcuate long form, domain specific subscores
+    if(with(scales_i, MOT==T | COG==T | LANG == T | SEM == T)){
+      
+      out_LF = optim(par = as.vector(THETA0_LF[i,]),
+                     fn = lf_posterior_density,
+                     gr = lf_grad_posterior_density,
+                     Yi = as.vector(Y[i,]),
+                     MUi = as.vector(MU_LF[i,]),
+                     invS =invS,
+                     TAU = TAU,
+                     LAMBDA = LAMBDA,
+                     J = J,
+                     K = K,
+                     method = "BFGS",
+                     hessian = TRUE)
+      
+      if(out_LF$convergence == 0){
+        MAP_LF[i,] = out_LF$par
+        SE_LF[i,] = sqrt(diag(solve(out_LF$hessian,diag(K))))
+        
+        #Nullify scores for which there are too few items responded in domain
+        if(scales_i$MOT==FALSE){MAP_LF[i,"MOT"]<-SE_LF[i,"MOT"]<-NA}
+        if(scales_i$COG==FALSE){MAP_LF[i,"COG"]<-SE_LF[i,"COG"]<-NA}
+        if(scales_i$LANG==FALSE){MAP_LF[i,"LANG"]<-SE_LF[i,"LANG"]<-NA}
+        if(scales_i$SEM==FALSE){MAP_LF[i,"SEM"]<-SE_LF[i,"SEM"]<-NA}
+        
+        # Obtain the standardized estimates
+        center_i = X_4[i,] %*% as.matrix(normcoef_mean)
+        scale_i =  X_4[i,] %*% as.matrix(normcoef_sd)
+        Z_LF[i,1:4] = (MAP_LF[i,]+50-center_i[1,1:4])/scale_i[1,1:4]
+      } else {
+        notes_i = paste0(notes_i, " Multidimensional scoring procedure scale did not converge; subscores not produced.")
+      }
+      
+    }
+    
+    if(!is.null(notes_i)){
+      NOTES[i] = notes_i
+    }
+    
+    
 
     setTxtProgressBar(pb, i)
   }
@@ -201,11 +255,8 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE){
   Z_LF = data.frame(round(Z_LF,3))
   names(Z_LF) = paste("z_",names(Z_LF), sep = "")
 
-  Z_SF = data.frame(round(Z_SF, 3))
-  names(Z_SF) = "z_OVERALL"
-
   # Put in the input
-  output_scored = cbind(data.frame(ID = cleaned_df$ID), Z_LF, Z_SF, MAP_LF, MAP_SF,SE_LF, SE_SF)
+  output_scored = cbind(data.frame(ID = cleaned_df$ID), Z_LF, MAP_LF, MAP_SF,SE_LF, SE_SF, NOTES)
   output_df = merge(x = input_df, y = output_scored, by = "ID") #re-merge with original data.
 
   # Write out the data
