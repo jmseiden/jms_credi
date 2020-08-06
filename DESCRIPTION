@@ -16,7 +16,7 @@ License: MIT
 URL: https://sites.sph.harvard.edu/credi/
 BugReports: {{ BugReports }}
 Imports: 
-    tidyverse (>=1.3.0),
+    tidyverse (>= 1.3.0),
     svDialogs (>= 1.0.0),
     stats (>= 3.5.0),
     magrittr,
