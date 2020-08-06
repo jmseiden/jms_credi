@@ -1,16 +1,11 @@
 remove.packages("credi")
+remove.packages("jms_credi")
 .rs.restartR()
 
 rm(list = ls())
 
-# Acer Laptop
-  #dropbox_wd = "C:/Users/marcu/Dropbox/"
-# Gaby 
-  dropbox_wd = "Z:/Dropbox/"
-# Queen Mary's Revenge
-  #dropbox_wd = "D:/Dropbox/"
 
-setwd(paste(dropbox_wd, "/Marcus CREDI/MIRT Scoring", sep = ""))
+setwd("G:/github-gitkraken/jms_credi")
 library("roxygen2")
 library("devtools")
 library("desc")
@@ -23,11 +18,10 @@ library("desc")
 #devtools::create("credi", rstudio = TRUE)    #First time only
 
 
-setwd("credi")
 #### DESCRIPTION file ####
 desc <- description$new()
 desc$get_deps()
-desc$set(Title = "CREDI Scoring",
+desc$set(Title = "JMS-CREDI Scoring",
          Description = "This function scores CREDI response data.",
          Author = "Marcus Waldman <marcus_waldman@gse.harvard.edu>",
          Maintainer = "Marcus Waldman <marcus_waldman@gse.harvard.edu>",
