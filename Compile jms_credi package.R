@@ -1,11 +1,13 @@
-remove.packages("credi")
-remove.packages("jms_credi")
-.rs.restartR()
+#remove.packages("credi")
+#remove.packages("jmscredi")
+#.rs.restartR()
 
 rm(list = ls())
 
+gitkraken_wd = "G:/github-gitkraken"
 
-setwd("G:/github-gitkraken/jms_credi")
+
+setwd(paste0(gitkraken_wd,"/jms_credi"))
 library("roxygen2")
 library("devtools")
 library("desc")
@@ -19,19 +21,29 @@ library("desc")
 
 
 #### DESCRIPTION file ####
-desc <- description$new()
-desc$get_deps()
-desc$set(Title = "JMS-CREDI Scoring",
-         Description = "This function scores CREDI response data.",
-         Author = "Marcus Waldman <marcus_waldman@gse.harvard.edu>",
-         Maintainer = "Marcus Waldman <marcus_waldman@gse.harvard.edu>",
-         Version = "1.0.5",
-         License = "MIT")
+desc <- description$new("!new")
+desc$set(Package = "jmscredi",
+         Title = "JMS-CREDI Scoring",
+         Description = "Scoring functions for CREDI response data.",
+         Maintainer = "Jonathan Seiden <jseiden@g.harvard.edu>",
+         Version = "2.0.0",
+         License = "MIT", 
+         BugReports = "Beta version.")
 desc$add_urls(urls = "https://sites.sph.harvard.edu/credi/")
+desc$add_author(given = "Jonathan",family = "Seiden",role = c("cre"),email = "jseiden@g.harvard.edu")
+desc$add_author(given = "Marcus", family = "Waldman", role = c("aut"), email = "marcus.waldman@unmc.edu")
+desc$del_author(given = "Jo", family = "Doe", email = "jodoe@dom.ain")
+
 
 # Imports:
+desc$set_dep(package = "tidyverse", version = ">= 1.3.0")
 desc$set_dep(package = "svDialogs", version = ">= 1.0.0")
 desc$set_dep(package = "stats", version = ">= 3.5.0")
+desc$set_dep(package = "magrittr")
+desc$set_dep(package = "readr")
+desc$set_dep(package = "dplyr")
+
+
 
 # Write out the DESCRIPTION folder
 desc$normalize()
@@ -40,12 +52,10 @@ desc$write(file = "DESCRIPTION")
 
 #Add descriptions
 
-setwd("..")
-setwd("source code")
-load("preliminary.RData")
-setwd("..")
 
-setwd("credi")
+
+load(paste0(gitkraken_wd,"/jms_credi/R/sysdata.rda"))
+setwd(paste0(gitkraken_wd,"/jms_credi"))
 usethis::use_data(B, invS, mest_df, beta, gamma, K, P, normcoef_mean, normcoef_sd,
          internal = TRUE, overwrite = TRUE, compress = "gzip")
 
@@ -56,4 +66,4 @@ usethis::use_data(B, invS, mest_df, beta, gamma, K, P, normcoef_mean, normcoef_s
 devtools::load_all(reset = TRUE)
 
 setwd("..")
-install("credi")
+install("jms_credi")
