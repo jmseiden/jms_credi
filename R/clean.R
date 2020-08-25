@@ -61,17 +61,14 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
   }
 
 
-  #Ignore variables that
-
-
+  #Ignore variables that will not be used during scoring
   vecQnames = c(mest_df$Item, mest_df$CREDI_code, mest_df$CREDI_code_Apr17)
   vecQnames = c("ID","AGE",vecQnames[complete.cases(vecQnames)])
-  j_ignore = which(!names(input_df)%in%vecQnames)
+  j_ignore = which(!names(input_df) %in% vecQnames)
   if (length(j_ignore)>0){
     log[[length(log)+1]] = paste("\n* Warning: The following variables will be ignored during scoring: ", paste(names(input_df)[j_ignore], collapse = ", "), sep = "")
     input_df = input_df[,-j_ignore]
   }
-
 
   # Ensure the naming of the response data is in the correct format
   j_AGE_ID = c( which(names(input_df)=="ID"), which(names(input_df)=="AGE") )
@@ -157,21 +154,22 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
 
 
   # Check that all variables outside of ID and ignored variables are numeric
+  # input_df = read.csv("C:/Users/Jonat/OneDrive - Harvard University/GSED work/test_data_errors.csv")
+
   classes <- as.data.frame(sapply(input_df, class)) %>%
     tibble::rownames_to_column(var = "variable")
     names(classes) <- c("var", "var.class")
 
   classes <- classes %>%
     dplyr::mutate(check.var = var %in% vecQnames) %>%
-    dplyr::mutate(problem = dplyr::case_when(check.var == TRUE &
-                                 var.class != "numeric"  &
-                                 var != "ID" ~ TRUE))
+    dplyr::mutate(OK = if_else(check.var == TRUE & var != "ID",
+                               ifelse(var.class %in% c("numeric", "logical", "integer"),
+                                      TRUE, FALSE),NA))
   not_numeric <- classes %>%
-    dplyr::filter(problem == TRUE) %>%
+    dplyr::filter(OK == FALSE) %>%
     dplyr::select(var)
 
-  # #I AM CONFUSED WHAT IS HAPPENING HERE. Something is causing consistent errors here.
-
+  # # #I AM CONFUSED WHAT IS HAPPENING HERE. Something is causing consistent errors here.
   # not_numeric = NULL
   # for (j in seq(1,ncol(input_df))){
   #   if(names(input_df)[j]!="ID"){
@@ -185,8 +183,7 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
   #   }
   # }
 
-
-  if (sum(classes$problem, na.rm = TRUE)>0){
+  if (dim(not_numeric)[1]>0){
     stop = 1
     stop_message = "\n* Error: AGE and all item response variables must be in numeric format. At least one of these variables may contain non-numeric values:"
     log[[length(log)+1]] = c(stop_message, not_numeric)
@@ -329,8 +326,6 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
     miss_df3 = transform(miss_df3, Pct_Missing = round(Pct_Missing, 1))
     miss_df3 = transform(miss_df3, Pct_Missing = paste(Pct_Missing,"%", sep = ""));
 
-
-
     log[[length(log)+1]] = "\nMissingness rates of items responses:"
     log[[length(log)+1]] = miss_df3
 
@@ -352,7 +347,6 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
     log[[length(log)+1]] =paste("*\nNote that reverse_code set to TRUE. As a result, the following items have been reverse coded automatically: ", paste(reversed_items, collapse = ", "), sep = "")
 
   }
-
 
   out_list = list(cleaned_df = cleaned_df, items_noresponse = items_noresponse, stop = stop, log = log)
 
