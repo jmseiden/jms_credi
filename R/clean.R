@@ -11,7 +11,6 @@
 #' @examples
 #' clean(input_df, mest_df, reverse_code, interactive, log)
 
-
 clean<-function(input_df, mest_df, reverse_code, interactive, log){
   # Input:
   #  input_df - User defined input file, with:
@@ -51,7 +50,7 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
   # Check that AGE is in the response data
   if (!"AGE"%in%names(input_df)){
     stop = 1
-    stop_message = "\n* Error: An AGE variable named must be included. Scoring requires children's age in months."
+    stop_message = "Error: An AGE variable named must be included. Scoring requires children's age in months."
     log[[length(log)+1]] = stop_message
   }
 
@@ -66,7 +65,7 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
   vecQnames = c("ID","AGE",vecQnames[complete.cases(vecQnames)])
   j_ignore = which(!names(input_df) %in% vecQnames)
   if (length(j_ignore)>0){
-    log[[length(log)+1]] = paste("\n* Warning: The following variables will be ignored during scoring: ", paste(names(input_df)[j_ignore], collapse = ", "), sep = "")
+    log[[length(log)+1]] = paste("Warning: The following variables will be ignored during scoring: ", paste(names(input_df)[j_ignore], collapse = ", "), sep = "")
     input_df = input_df[,-j_ignore]
   }
 
@@ -106,7 +105,7 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
   # Check if there were unknown variable names and print them out
   if (!is.null(unknown_vars)){
     stop = 1
-    stop_message = paste("\n* Error: Unknown variable names: ", paste(unknown_vars, collapse = ", "), sep = "")
+    stop_message = paste("Error: Unknown variable names: ", paste(unknown_vars, collapse = ", "), sep = "")
     log[[length(log)+1]] = stop_message
   }
 
@@ -120,7 +119,7 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
   inds = which(vnfreq_orig$freq_orig>1)
   if (length(inds)>0){
     stop = 1
-    stop_message = "\n* Error: Non-unique variable names: "
+    stop_message = "Error: Non-unique variable names: "
 
     log[[length(log)+1]] = paste(stop_message,
                                  paste(vnfreq_orig$orig[inds], collapse = ", "), sep = "" )
@@ -134,7 +133,7 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
   inds = which(rename_df$freq_new>1)
   if (length(inds)>0){
     stop = 1
-    stop_message = "\n* Error: When recoding variable names to the latest convention, one or more of the original
+    stop_message = "Error: When recoding variable names to the latest convention, one or more of the original
     variables mapped to the same recoded variable."
     tmp = c("original.variable --> recoded.variable")
     for (iii in 1:length(inds)){
@@ -185,7 +184,7 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
 
   if (dim(not_numeric)[1]>0){
     stop = 1
-    stop_message = "\n* Error: AGE and all item response variables must be in numeric format. At least one of these variables may contain non-numeric values:"
+    stop_message = "Error: AGE and all item response variables must be in numeric format. At least one of these variables may contain non-numeric values:"
     log[[length(log)+1]] = c(stop_message, not_numeric)
   }
 
@@ -205,7 +204,7 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
   rows_mi_age = which(is.na(input_df$AGE))
   if (length(rows_mi_age)>0){
     log[[length(log)+1]] =
-      paste("\n* Warning: ", length(rows_mi_age) , " observation(s) are missing AGE values and cannot be scored (ID = ", paste(input_df$ID[rows_mi_age], collapse = ", "), sep = "")
+      paste("Warning: ", length(rows_mi_age) , " observation(s) are missing AGE values and cannot be scored (ID = ", paste(input_df$ID[rows_mi_age], collapse = ", "), sep = "")
     dr = dr+1; discard_df$Reason[dr] = "Missing age values"; discard_df$Number[dr] = length(rows_mi_age)
     input_df = input_df[-rows_mi_age, ]
   }
@@ -231,7 +230,7 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
     rows_toofew_y = which(num_nonmi_y<5L)
     if (length(rows_toofew_y)>0){
       log[[length(log)+1]] =
-        paste("\n* Warning:  The following ", length(rows_toofew_y) ," observation(s) contain less than 5 non-missing item responses and will not be scored:\n  ID = ", paste(input_df$ID[rows_toofew_y], collapse = ", "), sep = "")
+        paste("Warning:  The following ", length(rows_toofew_y) ," observation(s) contain less than 5 non-missing item responses and will not be scored:\n  ID = ", paste(input_df$ID[rows_toofew_y], collapse = ", "), sep = "")
       dr = dr+1; discard_df$Reason[dr] = "Less than 5 item responses"; discard_df$Number[dr] = length(rows_toofew_y)
       input_df = input_df[-rows_toofew_y, ]
     }
@@ -241,7 +240,7 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
 
   if (nrow(input_df)==0){
     stop = 1
-    stop_message = paste("\n* Error:\n  All ", N_input," observations have been discarded for the following reason(s): \n", sep = "")
+    stop_message = paste("Error:\n  All ", N_input," observations have been discarded for the following reason(s): \n", sep = "")
     print(stop_message)
     print(discard_df[complete.cases(discard_df), ])
     log[[length(log)+1]] =  stop_message
@@ -259,13 +258,13 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
     discard_df = transform(discard_df, Percent = paste(round(100*Number/N_input,1),"%",sep = ""))
     N_discarded = sum(discard_df$Number); Pct_discarded = round(100*N_discarded/N_input,1)
 
-    log[[length(log)+1]] =  paste("\n* Warning:  A total of ", N_discarded, " (", Pct_discarded,"%) observation(s) cannot be scored for the following reason(s):",sep ="")
+    log[[length(log)+1]] =  paste("Warning:  A total of ", N_discarded, " (", Pct_discarded,"%) observation(s) cannot be scored for the following reason(s):",sep ="")
     log[[length(log)+1]] = discard_df[complete.cases(discard_df), ]
 
     if (interactive == FALSE){
       x = "Y"
     } else {
-      print(paste("\n* Warning:  A total of ", N_discarded, " (", Pct_discarded,"%) observation(s) cannot be scored for the following reason(s):",sep =""))
+      print(paste("Warning:  A total of ", N_discarded, " (", Pct_discarded,"%) observation(s) cannot be scored for the following reason(s):",sep =""))
       print(discard_df[complete.cases(discard_df), ])
       x<-as.character(readline(prompt = "Would you like to continue? [Y/N]: "))
     }
@@ -326,7 +325,7 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
     miss_df3 = transform(miss_df3, Pct_Missing = round(Pct_Missing, 1))
     miss_df3 = transform(miss_df3, Pct_Missing = paste(Pct_Missing,"%", sep = ""));
 
-    log[[length(log)+1]] = "\nMissingness rates of items responses:"
+    log[[length(log)+1]] = "Missingness rates of items responses:"
     log[[length(log)+1]] = miss_df3
 
   }
@@ -344,11 +343,50 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
       reversed_items = c(reversed_items, old_name)
     }
 
-    log[[length(log)+1]] =paste("*\nNote that reverse_code set to TRUE. As a result, the following items have been reverse coded automatically: ", paste(reversed_items, collapse = ", "), sep = "")
+    log[[length(log)+1]] =paste("Note that reverse_code set to TRUE. As a result, the following items have been reverse coded automatically: ", paste(reversed_items, collapse = ", "), sep = "")
 
   }
 
-  out_list = list(cleaned_df = cleaned_df, items_noresponse = items_noresponse, stop = stop, log = log)
+  # Check to see if the input DF contains Short-Form variable names
+  if(sum(names(input_df) %in% sf_lf_naming$SF_var) >= 1) {
+    is_sf = TRUE
+  } else {
+    is_sf = FALSE
+  }
+
+  #Create an SF df that only uses SF-age-appropriate items, and sets all else to NA
+  sf_df <- cleaned_df %>%
+    mutate(age_group = ifelse(AGE < 6, "A",
+                              ifelse(AGE < 11, "B",
+                                     ifelse(AGE < 17, "C",
+                                            ifelse(AGE < 24, "D",
+                                                   ifelse(AGE < 29, "E",
+                                                          ifelse(AGE < 36, "F", NA)))))))
+
+  sf_df_a <- sf_df %>%
+    filter(age_group == "A") %>%
+    select(c(sf_lf_naming$LF[sf_lf_naming$age_group == "A"], "ID", "AGE", "age_group"))
+  sf_df_b <- sf_df %>%
+    filter(age_group == "B") %>%
+    select(c(sf_lf_naming$LF[sf_lf_naming$age_group == "B"], "ID", "AGE", "age_group"))
+  sf_df_c <- sf_df %>%
+    filter(age_group == "C") %>%
+    select(c(sf_lf_naming$LF[sf_lf_naming$age_group == "C"], "ID", "AGE", "age_group"))
+  sf_df_d <- sf_df %>%
+    filter(age_group == "D") %>%
+    select(c(sf_lf_naming$LF[sf_lf_naming$age_group == "D"], "ID", "AGE", "age_group"))
+  sf_df_e <- sf_df %>%
+    filter(age_group == "E") %>%
+    select(c(sf_lf_naming$LF[sf_lf_naming$age_group == "E"], "ID", "AGE", "age_group"))
+  sf_df_f <- sf_df %>%
+    filter(age_group == "B") %>%
+    select(c(sf_lf_naming$LF[sf_lf_naming$age_group == "F"], "ID", "AGE", "age_group"))
+
+  sf_df <- bind_rows(sf_df_a, sf_df_b, sf_df_c, sf_df_d, sf_df_e, sf_df_f)
+
+  # Get an indicator for short form.
+
+  out_list = list(cleaned_df = cleaned_df, sf_df = sf_df, is_sf = is_sf, items_noresponse = items_noresponse, stop = stop, log = log)
 
   return(out_list)
 }

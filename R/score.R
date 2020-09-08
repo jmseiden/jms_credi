@@ -141,6 +141,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
   NOTES = rep("", nrow(Y))
   writeLines(paste("\nScoring ", N, " observations:"))
   pb<-txtProgressBar(min = 0, max = N, initial = 0, style = 3)
+
 #i = 1
   for (i in 1:N){
 
