@@ -39,6 +39,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
 
   require("stats")
   require("svDialogs")
+  require("tidyverse")
 
   # Created log file
   time1 = proc.time()
@@ -92,12 +93,15 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
 
   } # End if stop != 0
   cleaned_df = list_cleaned$cleaned_df
+  sf_df = list_cleaned$sf_df
   items_noresponse = list_cleaned$items_noresponse
+
 
   # Crate data matricies
   X = model.matrix(~1 + I( (AGE-18)/10.39 ) + I( ((AGE-18)/10.39)^2 ) + I( ((AGE-18)/10.39)^3 ), data = cleaned_df)
   X_4 = model.matrix(~1 + I( (AGE-18)/10.39 ) + I( ((AGE-18)/10.39)^2 ) + I( ((AGE-18)/10.39)^3 ) + I( ((AGE-18)/10.39)^4 ), data = cleaned_df)
   Y = as.matrix(cleaned_df[,-match(c("ID","AGE",items_noresponse), names(cleaned_df))]); Y[is.na(Y)] = -9L
+  Y_sf = as.matrix(sf_df[,-na.omit(match(c("ID","AGE","age_group",items_noresponse), names(sf_df)))]); Y_sf[is.na(Y_sf)] = -9L
   MU_LF = X%*%as.matrix(B) #NxK (matrix)
   MU_SF = X%*%as.numeric(beta) #Nx1
 
@@ -146,9 +150,21 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
   for (i in 1:N){
 
     scales_i = which_scores(Y[i,], mest_df)
-    notes_i = NULL
+    if(list_cleaned$is_sf){
+      scales_i[-1] <- F
+    }
+
+    notes_i = paste0("ID = ", cleaned_df$ID[i],":")
     if(prod(as.numeric(scales_i[1,]))==0){
-      notes_i = paste0("The following scales did not have at least ", min_items," responses: ", paste0(names(scales_i)[scales_i[1,]==FALSE], collapse = ", "),"." )
+      if(list_cleaned$is_sf){
+        notes_i = paste0(notes_i, " Only responses to short form items detected. Therefore, scoring will produce only a CREDI-SF score.")
+        if (scales_i$SF==F){
+          notes_i = paste0(notes_i, " Fewer than the number of responses (", min_items,") needed to produce a score.")
+        }
+      } else {
+        notes_i = paste0(notes_i, " The following scales did not have at least ", min_items," responses: ", paste0(names(scales_i)[scales_i[1,]==FALSE], collapse = ", "),"." )
+      }
+
     }
 
 
@@ -248,8 +264,8 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
   SE_LF = data.frame(round(SE_LF,3)); names(SE_LF) = paste(names(SE_LF),"_SE", sep = "")
 
   # Clean up the MAP_SF and SE_SF
-  MAP_SF = data.frame(OVERALL = round(MAP_SF,3)+50)
-  SE_SF = data.frame(OVERALL_SE = round(SE_SF,3))
+  MAP_SF = data.frame(SF = round(MAP_SF,3)+50)
+  SE_SF = data.frame(SF_SE = round(SE_SF,3))
 
   #Clean the standardized estimates
   Z_LF = data.frame(round(Z_LF,3))
