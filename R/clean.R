@@ -63,7 +63,8 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
   #Ignore variables that will not be used during scoring
   vecQnames = c(mest_df$Item, mest_df$CREDI_code, mest_df$CREDI_code_Apr17)
   vecQnames = c("ID","AGE",vecQnames[complete.cases(vecQnames)])
-  j_ignore = which(!names(input_df) %in% vecQnames)
+  vecQnames.SF = c("ID","AGE",vecQnames[complete.cases(vecQnames)],sf_lf_naming$SF_var)
+  j_ignore = which(!names(input_df) %in% vecQnames.SF)
   if (length(j_ignore)>0){
     log[[length(log)+1]] = paste("Warning: The following variables will be ignored during scoring: ", paste(names(input_df)[j_ignore], collapse = ", "), sep = "")
     input_df = input_df[,-j_ignore]
