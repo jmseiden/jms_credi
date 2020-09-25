@@ -76,7 +76,8 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
   key_df = data.frame(
     rbind( cbind(mest_df$CREDI_code, mest_df$CREDI_code),
            cbind( mest_df$CREDI_code, mest_df$Item),
-           cbind( mest_df$CREDI_code, mest_df$CREDI_code_Apr17))
+           cbind( mest_df$CREDI_code, mest_df$CREDI_code_Apr17),
+           cbind( sf_lf_naming$LF, sf_lf_naming$SF_var))
   )
   key_df = key_df[complete.cases(key_df), ]
   names(key_df) = c("CREDI_code", "Other")
@@ -131,17 +132,17 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
   vnfreq_new = data.frame(table(rename_df$new)); names(vnfreq_new) = c("new","freq_new")
   rename_df = merge(x = rename_df, y = vnfreq_new, by = "new", all.x = TRUE, all.y = TRUE, sort = FALSE)
 
-  inds = which(rename_df$freq_new>1)
-  if (length(inds)>0){
-    stop = 1
-    stop_message = "Error: When recoding variable names to the latest convention, one or more of the original
-    variables mapped to the same recoded variable."
-    tmp = c("original.variable --> recoded.variable")
-    for (iii in 1:length(inds)){
-      tmp = c(tmp, paste(rename_df$orig[inds[iii]], rename_df$new[inds[iii]], sep = " --> "))
-    }
-    log[[length(log)+1]]  = c(stop_message, tmp)
-  }
+  # inds = which(rename_df$freq_new>1)
+  # if (length(inds)>0){
+  #   stop = 1
+  #   stop_message = "Error: When recoding variable names to the latest convention, one or more of the original
+  #   variables mapped to the same recoded variable."
+  #   tmp = c("original.variable --> recoded.variable")
+  #   for (iii in 1:length(inds)){
+  #     tmp = c(tmp, paste(rename_df$orig[inds[iii]], rename_df$new[inds[iii]], sep = " --> "))
+  #   }
+  #   log[[length(log)+1]]  = c(stop_message, tmp)
+  # }
 
   if (stop == 1){
     out_list = list(cleaned_df = NULL, items_noresponse = NULL, stop = stop, log = log)
