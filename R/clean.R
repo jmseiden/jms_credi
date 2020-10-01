@@ -26,6 +26,9 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
 
   stop = 0
 
+  # Check to see if the input DF contains Short-Form variable names
+  is_sf <- sum(names(input_df) %in% sf_lf_naming$SF_var) >= 1
+
   names(input_df) = toupper(names(input_df))
 
   # Ensure that there is a unique ID variable for each observations
@@ -347,13 +350,6 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
 
     log[[length(log)+1]] =paste("Note that reverse_code set to TRUE. As a result, the following items have been reverse coded automatically: ", paste(reversed_items, collapse = ", "), sep = "")
 
-  }
-
-  # Check to see if the input DF contains Short-Form variable names
-  if(sum(names(input_df) %in% sf_lf_naming$SF_var) >= 1) {
-    is_sf = TRUE
-  } else {
-    is_sf = FALSE
   }
 
   #Create an SF df that only uses SF-age-appropriate items, and sets all else to NA

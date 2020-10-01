@@ -94,10 +94,11 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
   } # End if stop != 0
   cleaned_df = list_cleaned$cleaned_df
   sf_df = list_cleaned$sf_df
+  is_sf = list_cleaned$is_sf
   items_noresponse = list_cleaned$items_noresponse
 
 
-  # Crate data matricies
+  # Create data matricies
   X = model.matrix(~1 + I( (AGE-18)/10.39 ) + I( ((AGE-18)/10.39)^2 ) + I( ((AGE-18)/10.39)^3 ), data = cleaned_df)
   X_4 = model.matrix(~1 + I( (AGE-18)/10.39 ) + I( ((AGE-18)/10.39)^2 ) + I( ((AGE-18)/10.39)^3 ) + I( ((AGE-18)/10.39)^4 ), data = cleaned_df)
   Y = as.matrix(cleaned_df[,-match(c("ID","AGE",items_noresponse), names(cleaned_df))]); Y[is.na(Y)] = -9L
@@ -105,7 +106,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
   MU_LF = X%*%as.matrix(B) #NxK (matrix)
   MU_SF = X%*%as.numeric(beta) #Nx1
 
-  # Obtain necessary parameter matricies
+  # Obtain necessary parameter matrices
   inds_exclude = match(items_noresponse, mest_df$CREDI_code)
   if (length(inds_exclude)==0){
     LAMBDA = as.matrix(mest_df[,c("MOT","COG","LANG","SEM")])
@@ -119,8 +120,6 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
     DELTA = as.vector(mest_df$delta[-inds_exclude])
   }
 
-
-
   # Obtain necessary constants
   J = ncol(Y);
   K = 4L
@@ -128,7 +127,6 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
   N = as.integer(nrow(Y))
   invS = as.matrix(invS)
   SIGMA_SQ= exp(X%*%as.numeric(gamma))
-
 
   # initialize the theta values
   THETA0_LF = MU_LF #NxK (matrix)
@@ -167,9 +165,8 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
 
     }
 
-
     #Calculate short form scores, as appropriate
-    if(scales_i$SF==TRUE){
+    if(scales_i$SF==TRUE | is_sf == TRUE){
 
       js_SF = which(names(Y[i,]) %in% mest_df[mest_df$ShortForm==TRUE,"CREDI_code"])
       out_SF = optim(par = as.vector(THETA0_SF[i,]),
@@ -263,7 +260,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
   MAP_LF = data.frame(round(MAP_LF,3)+50)
   SE_LF = data.frame(round(SE_LF,3)); names(SE_LF) = paste(names(SE_LF),"_SE", sep = "")
   MAP_LF$OVERALL = round(MAP_OVERALL,3)+50
-  MAP_LF$SE_OVERALL = round(SE_OVERALL,3)
+  SE_LF$SE_OVERALL = round(SE_OVERALL,3)
 
   # Clean up the MAP_SF and SE_SF
   MAP_SF = data.frame(SF = round(MAP_SF,3)+50)
@@ -273,9 +270,16 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
   Z_LF = data.frame(round(Z_LF,3))
   names(Z_LF) = paste("z_",names(Z_LF), sep = "")
 
-  # Put in the input
-  output_scored = cbind(data.frame(ID = cleaned_df$ID), Z_LF, MAP_LF, MAP_SF,SE_LF, SE_SF, NOTES)
+
+  # Put in the input depending on whether dataset is SF or LD
+  output_scored = cbind(data.frame(ID = cleaned_df$ID), Z_LF, MAP_LF, SE_LF, MAP_SF, SE_SF, NOTES)
+    if(is_sf == TRUE){
+      output_scored <- output_scored %>%
+        select(c(,"ID", "SF", "SF_SE"))
+    }
   output_df = merge(x = input_df, y = output_scored, by = "ID") #re-merge with original data.
+
+  #Scrub domain and OVERALL scores for Short Form datasets
 
   # Write out the data
   if(interactive == TRUE){
