@@ -262,6 +262,8 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
   # Clean up the MAP_LF and SE_LF
   MAP_LF = data.frame(round(MAP_LF,3)+50)
   SE_LF = data.frame(round(SE_LF,3)); names(SE_LF) = paste(names(SE_LF),"_SE", sep = "")
+  MAP_LF$OVERALL = round(MAP_OVERALL,3)+50
+  MAP_LF$SE_OVERALL = round(SE_OVERALL,3)
 
   # Clean up the MAP_SF and SE_SF
   MAP_SF = data.frame(SF = round(MAP_SF,3)+50)
