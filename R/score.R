@@ -139,7 +139,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
   Z_LF = MAP_LF
   SE_LF = MAP_LF
   SE_SF = MAP_SF
-  SE_OVERALL = MAP_OVERALL
+  OVERALL_SE = MAP_OVERALL
   NOTES = rep("", nrow(Y))
   writeLines(paste("\nScoring ", N, " observations:"))
   pb<-txtProgressBar(min = 0, max = N, initial = 0, style = 3)
@@ -205,7 +205,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
 
       if(out_OVERALL$convergence==0){ #If converged, produce score.
         MAP_OVERALL[i,] = out_OVERALL$par
-        SE_OVERALL[i,] = 1/sqrt(out_OVERALL$hessian)
+        OVERALL_SE[i,] = 1/sqrt(out_OVERALL$hessian)
       } else {
         notes_i = paste0(notes_i, " Scoring procedure for OVERALL scale did not converge; OVERALL score not produced.")
       }
@@ -260,7 +260,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
   MAP_LF = data.frame(round(MAP_LF,3)+50)
   SE_LF = data.frame(round(SE_LF,3)); names(SE_LF) = paste(names(SE_LF),"_SE", sep = "")
   MAP_LF$OVERALL = round(MAP_OVERALL,3)+50
-  SE_LF$SE_OVERALL = round(SE_OVERALL,3)
+  SE_LF$OVERALL_SE = round(OVERALL_SE,3)
 
   # Clean up the MAP_SF and SE_SF
   MAP_SF = data.frame(SF = round(MAP_SF,3)+50)
