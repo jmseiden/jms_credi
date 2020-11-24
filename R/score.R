@@ -271,10 +271,6 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
 
   # Put in the input depending on whether dataset is SF or LD
   output_scored = cbind(data.frame(ID = cleaned_df$ID), MAP_LF, SE_LF, MAP_SF, SE_SF, NOTES)
-    if(is_sf == TRUE){
-      output_scored <- output_scored %>%
-        select(c(,"ID", "SF", "SF_SE"))
-    }
 
   # Add in the standardized estimates
   AGE <- cleaned_df %>%
@@ -290,6 +286,12 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
            Z_MOT = (MOT - MOT_mu) / MOT_sigma,
            Z_SF = (SF - SF_mu) / SF_sigma) %>%
     dplyr::select(-names(zscoredat))
+
+  #Sanitize Short Form data
+  if(is_sf == TRUE){
+    output_scored <- output_scored %>%
+      select(c(,"ID", "SF", "SF_SE", "Z_SF"))
+  }
 
   #Write out the output df
   output_df = merge(x = input_df, y = output_scored, by = "ID") #re-merge with original data.
