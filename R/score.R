@@ -97,7 +97,6 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
   is_sf = list_cleaned$is_sf
   items_noresponse = list_cleaned$items_noresponse
 
-
   # Create data matricies
   X = model.matrix(~1 + I( (AGE-18)/10.39 ) + I( ((AGE-18)/10.39)^2 ) + I( ((AGE-18)/10.39)^3 ), data = cleaned_df)
   X_4 = model.matrix(~1 + I( (AGE-18)/10.39 ) + I( ((AGE-18)/10.39)^2 ) + I( ((AGE-18)/10.39)^3 ) + I( ((AGE-18)/10.39)^4 ), data = cleaned_df)
@@ -136,7 +135,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
   MAP_LF = 0.*THETA0_LF + NA
   MAP_SF = 0.*THETA0_SF + NA
   MAP_OVERALL = 0.*THETA0_SF + NA
-  Z_LF = MAP_LF
+  # Z_LF = MAP_LF
   SE_LF = MAP_LF
   SE_SF = MAP_SF
   OVERALL_SE = MAP_OVERALL
@@ -240,9 +239,9 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
         if(scales_i$SEM==FALSE){MAP_LF[i,"SEM"]<-SE_LF[i,"SEM"]<-NA}
 
         # Obtain the standardized estimates
-        center_i = X_4[i,] %*% as.matrix(normcoef_mean)
-        scale_i =  X_4[i,] %*% as.matrix(normcoef_sd)
-        Z_LF[i,1:4] = (MAP_LF[i,]+50-center_i[1,1:4])/scale_i[1,1:4]
+        # center_i = X_4[i,] %*% as.matrix(normcoef_mean)
+        # scale_i =  X_4[i,] %*% as.matrix(normcoef_sd)
+        # Z_LF[i,1:4] = (MAP_LF[i,]+50-center_i[1,1:4])/scale_i[1,1:4]
       } else {
         notes_i = paste0(notes_i, " Multidimensional scoring procedure scale did not converge; subscores not produced.")
       }
@@ -267,21 +266,35 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
   SE_SF = data.frame(SF_SE = round(SE_SF,3))
 
   #Clean the standardized estimates
-  Z_LF = data.frame(round(Z_LF,3))
-  names(Z_LF) = paste("z_",names(Z_LF), sep = "")
-
+  # Z_LF = data.frame(round(Z_LF,3))
+  # names(Z_LF) = paste("z_",names(Z_LF), sep = "")
 
   # Put in the input depending on whether dataset is SF or LD
-  output_scored = cbind(data.frame(ID = cleaned_df$ID), Z_LF, MAP_LF, SE_LF, MAP_SF, SE_SF, NOTES)
+  output_scored = cbind(data.frame(ID = cleaned_df$ID), MAP_LF, SE_LF, MAP_SF, SE_SF, NOTES)
     if(is_sf == TRUE){
       output_scored <- output_scored %>%
         select(c(,"ID", "SF", "SF_SE"))
     }
+
+  # Add in the standardized estimates
+  AGE <- cleaned_df %>%
+    select(c(ID, AGE))
+
+  output_scored <- output_scored %>%
+    merge(AGE, by = "ID") %>%
+    merge(zscoredat, by = "AGE") %>%
+    mutate(Z_OVERALL = (OVERALL - OVERALL_mu) / OVERALL_sigma,
+           Z_COG = (COG - COG_mu) / COG_sigma,
+           Z_LANG = (LANG - LANG_mu) / LANG_sigma,
+           Z_SEM = (SEM - SEM_mu) / SEM_sigma,
+           Z_MOT = (MOT - MOT_mu) / MOT_sigma,
+           Z_SF = (SF - SF_mu) / SF_sigma) %>%
+    dplyr::select(-names(zscoredat))
+
+  #Write out the output df
   output_df = merge(x = input_df, y = output_scored, by = "ID") #re-merge with original data.
 
-  #Scrub domain and OVERALL scores for Short Form datasets
-
-  # Write out the data
+    # Write out the data
   if(interactive == TRUE){
     out_dlgDir = dlgSave(default = csv_wd, title = "Save scores as", gui = .GUI)
     out_csv = paste(strsplit(out_dlgDir$res,"/")[[1]],collapse = "/")
