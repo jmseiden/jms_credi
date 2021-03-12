@@ -6,12 +6,13 @@
 #' @param csv_wd (string) Working directory where input *.csv file is located.
 #' @param reverse_code (logical). If TRUE, then reverse codes LF9, LF102, LFMH1, LFMH2, LFMH3, LFMH4, LFMH5, LFMH7, LFMH8, & LFMH9. If FALSE, then no reverse coding is applied.
 #' @param log (string) Name of the *.txt log file for the CREDI scoring.
+#' @param min_items (integer) Default to 5. The minimum number of scale-specific items (e.g., SF, MOT, etc.) required for a score to be calculated.
 #' @keywords CREDI
 #' @export
 #' @examples
 #' clean(input_df, mest_df, reverse_code, interactive, log)
 
-clean<-function(input_df, mest_df, reverse_code, interactive, log){
+clean<-function(input_df, mest_df, reverse_code, interactive, log, min_items){
   # Input:
   #  input_df - User defined input file, with:
   #                 a) LF item naming convention needed.
@@ -232,10 +233,10 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log){
 
     # Discard observations with fewer than 5 item responses
     num_nonmi_y = apply(temp_df, MARGIN = 1L, function(X){sum(!is.na(X))})
-    rows_toofew_y = which(num_nonmi_y<5L)
+    rows_toofew_y = which(num_nonmi_y<min_items)
     if (length(rows_toofew_y)>0){
       log[[length(log)+1]] =
-        paste("Warning:  The following ", length(rows_toofew_y) ," observation(s) contain less than 5 non-missing item responses and will not be scored:\n  ID = ", paste(input_df$ID[rows_toofew_y], collapse = ", "), sep = "")
+        paste("Warning:  The following ", length(rows_toofew_y) ," observation(s) contain less than ", min_items," non-missing item responses and will not be scored:\n  ID = ", paste(input_df$ID[rows_toofew_y], collapse = ", "), sep = "")
       dr = dr+1; discard_df$Reason[dr] = "Less than 5 item responses"; discard_df$Number[dr] = length(rows_toofew_y)
       input_df = input_df[-rows_toofew_y, ]
     }
