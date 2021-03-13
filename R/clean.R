@@ -52,7 +52,7 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log, min_items){
 
 
   # Check that AGE is in the response data
-  if (!"AGE"%in%names(input_df)){
+  if (!"AGE" %in% names(input_df)){
     stop = 1
     stop_message = "Error: An AGE variable named must be included. Scoring requires children's age in months."
     log[[length(log)+1]] = stop_message

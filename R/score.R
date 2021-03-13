@@ -14,6 +14,7 @@
 #' @importFrom dplyr filter
 #' @importFrom dplyr select
 #' @importFrom dplyr n_distinct
+#' @importFrom dplyr left_join
 #' @importFrom tibble rownames_to_column
 #' @export
 #' @examples
@@ -63,7 +64,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
 
   # Clean the input data
   list_cleaned = clean(input_df = input_df, mest_df = mest_df, reverse_code = reverse_code,
-                       interactive = interactive, log = log)
+                       interactive = interactive, log = log, min_items = min_items)
   log = list_cleaned$log
   if(list_cleaned$stop!=0){
 
@@ -92,6 +93,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
     #return(list(log = log))
 
   } # End if stop != 0
+
   cleaned_df = list_cleaned$cleaned_df
   sf_df = list_cleaned$sf_df
   is_sf = list_cleaned$is_sf
@@ -146,7 +148,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
 #i = 1
   for (i in 1:N){
 
-    scales_i = which_scores(Y[i,], mest_df)
+    scales_i = which_scores(Y[i,], mest_df, min_items)
     if(list_cleaned$is_sf){
       scales_i[-1] <- F
     }
@@ -238,7 +240,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
         if(scales_i$LANG==FALSE){MAP_LF[i,"LANG"]<-SE_LF[i,"LANG"]<-NA}
         if(scales_i$SEM==FALSE){MAP_LF[i,"SEM"]<-SE_LF[i,"SEM"]<-NA}
 
-        # Obtain the standardized estimates
+        # Obtain the standardized estimates (OLD METHOD)
         # center_i = X_4[i,] %*% as.matrix(normcoef_mean)
         # scale_i =  X_4[i,] %*% as.matrix(normcoef_sd)
         # Z_LF[i,1:4] = (MAP_LF[i,]+50-center_i[1,1:4])/scale_i[1,1:4]
@@ -269,12 +271,13 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
   # Z_LF = data.frame(round(Z_LF,3))
   # names(Z_LF) = paste("z_",names(Z_LF), sep = "")
 
-  # Put in the input depending on whether dataset is SF or LD
+  # Put in the input depending on whether dataset is SF or LF
   output_scored = cbind(data.frame(ID = cleaned_df$ID), MAP_LF, SE_LF, MAP_SF, SE_SF, NOTES)
 
-  # Add in the standardized estimates
+  # Calculate in the standardized estimates
   AGE <- cleaned_df %>%
-    select(c(ID, AGE))
+    select(c(ID, AGE)) %>%
+    mutate(AGE = floor(AGE))
 
   output_scored <- output_scored %>%
     merge(AGE, by = "ID") %>%
@@ -285,16 +288,16 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
            Z_SEM = (SEM - SEM_mu) / SEM_sigma,
            Z_MOT = (MOT - MOT_mu) / MOT_sigma,
            Z_SF = (SF - SF_mu) / SF_sigma) %>%
-    dplyr::select(-names(zscoredat))
+    select(-names(zscoredat))
 
   #Sanitize Short Form data
   if(is_sf == TRUE){
     output_scored <- output_scored %>%
-      select(c(,"ID", "SF", "SF_SE", "Z_SF"))
+      select(c("ID", "SF", "SF_SE", "Z_SF"))
   }
 
   #Write out the output df
-  output_df = merge(x = input_df, y = output_scored, by = "ID") #re-merge with original data.
+  output_df = left_join(x = input_df, y = output_scored, by = "ID") #re-merge with original data.
 
     # Write out the data
   if(interactive == TRUE){
