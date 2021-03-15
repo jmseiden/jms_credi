@@ -27,13 +27,14 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log, min_items){
 
   stop = 0
 
+  # Make all variable names uppercase
+  names(input_df) = toupper(names(input_df))
+
   # Check to see if the input DF contains Short-Form variable names
   is_sf <- sum(names(input_df) %in% sf_lf_naming$SF_var) >= 1
 
-  names(input_df) = toupper(names(input_df))
-
   # Ensure that there is a unique ID variable for each observations
-  if (!"ID"%in%names(input_df)){
+  if (!"ID" %in% names(input_df)){
     stop = 1
     stop_message = "\n* Error: An identifier variable named ID must be included."
     log[[length(log)+1]] = stop_message
@@ -62,7 +63,6 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log, min_items){
     out_list = list(cleaned_df = NULL, items_noresponse = NULL, stop = stop, log = log)
     return(out_list)
   }
-
 
   #Ignore variables that will not be used during scoring
   vecQnames = c(mest_df$Item, mest_df$CREDI_code, mest_df$CREDI_code_Apr17)
@@ -153,14 +153,10 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log, min_items){
     return(out_list)
   }
 
-
   # Finally recode the variable
   names(input_df) = rename_df$new
 
-
   # Check that all variables outside of ID and ignored variables are numeric
-  # input_df = read.csv("C:/Users/Jonat/OneDrive - Harvard University/GSED work/test_data_errors.csv")
-
   classes <- as.data.frame(sapply(input_df, class)) %>%
     tibble::rownames_to_column(var = "variable")
     names(classes) <- c("var", "var.class")
@@ -173,20 +169,6 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log, min_items){
   not_numeric <- classes %>%
     dplyr::filter(OK == FALSE) %>%
     dplyr::select(var)
-
-  # # #I AM CONFUSED WHAT IS HAPPENING HERE. Something is causing consistent errors here.
-  # not_numeric = NULL
-  # for (j in seq(1,ncol(input_df))){
-  #   if(names(input_df)[j]!="ID"){
-  #     if (sum(is.na(input_df[,j]))!=length(input_df[,j])) {
-  #       if( !is.numeric(input_df[,j]) ){
-  #         new_name = names(input_df)[j]
-  #         old_name = rename_df$orig[rename_df$new == new_name]
-  #         not_numeric = c(not_numeric,old_name)
-  #       }
-  #     }
-  #   }
-  # }
 
   if (dim(not_numeric)[1]>0){
     stop = 1
@@ -205,7 +187,6 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log, min_items){
   dr = 0
 
   # Clean the AGE as needed
-  #input_df$AGE[c(2, 16, 28, 45:50)] = NA # works
   # Missing age
   rows_mi_age = which(is.na(input_df$AGE))
   if (length(rows_mi_age)>0){
@@ -243,7 +224,6 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log, min_items){
   }
 
   # Check if there are any remaining observations to score
-
   if (nrow(input_df)==0){
     stop = 1
     stop_message = paste("Error:\n  All ", N_input," observations have been discarded for the following reason(s): \n", sep = "")
@@ -378,12 +358,10 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log, min_items){
     filter(age_group == "E") %>%
     select(c(sf_lf_naming$LF[sf_lf_naming$age_group == "E"], "ID", "AGE", "age_group"))
   sf_df_f <- sf_df %>%
-    filter(age_group == "B") %>%
+    filter(age_group == "F") %>%
     select(c(sf_lf_naming$LF[sf_lf_naming$age_group == "F"], "ID", "AGE", "age_group"))
 
   sf_df <- bind_rows(sf_df_a, sf_df_b, sf_df_c, sf_df_d, sf_df_e, sf_df_f)
-
-  # Get an indicator for short form.
 
   out_list = list(cleaned_df = cleaned_df, sf_df = sf_df, is_sf = is_sf, items_noresponse = items_noresponse, stop = stop, log = log)
 

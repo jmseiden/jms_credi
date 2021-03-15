@@ -28,7 +28,6 @@
 score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items = 5){
 
   # Identify if dialog specifying .csv file should be bypassed.
-
   bypass = ifelse(is.null(data), FALSE, TRUE)
   if (bypass == TRUE){
     if (!is.data.frame(data)){
@@ -63,6 +62,13 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
   }
 
   # Clean the input data
+  #Uppercase id in the input_df if no ID variable exists
+  if("id" %in% names(input_df) & is.na(match("ID", names(input_df)))){
+    input_df <- input_df %>%
+      mutate(ID = id)
+  }
+
+  #USe the clean function to clean the DF
   list_cleaned = clean(input_df = input_df, mest_df = mest_df, reverse_code = reverse_code,
                        interactive = interactive, log = log, min_items = min_items)
   log = list_cleaned$log
@@ -153,15 +159,15 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
       scales_i[-1] <- F
     }
 
-    notes_i = paste0("ID = ", cleaned_df$ID[i],":")
+    notes_i = paste0("ID = ", cleaned_df$ID[i],": ")
     if(prod(as.numeric(scales_i[1,]))==0){
       if(list_cleaned$is_sf){
-        notes_i = paste0(notes_i, " Only responses to short form items detected. Therefore, scoring will produce only a CREDI-SF score.")
+        notes_i = paste0(notes_i, "Only responses to short form items detected. Therefore, scoring will produce only a CREDI-SF score.")
         if (scales_i$SF==F){
-          notes_i = paste0(notes_i, " Fewer than the number of responses (", min_items,") needed to produce a score.")
+          notes_i = paste0(notes_i, "Fewer than the number of responses (", min_items,") needed to produce a score.")
         }
       } else {
-        notes_i = paste0(notes_i, " The following scales did not have at least ", min_items," responses: ", paste0(names(scales_i)[scales_i[1,]==FALSE], collapse = ", "),"." )
+        notes_i = paste0(notes_i, "The following scales did not have at least ", min_items," responses: ", paste0(names(scales_i)[scales_i[1,]==FALSE], collapse = ", "),"." )
       }
 
     }
@@ -185,7 +191,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
         MAP_SF[i,] = out_SF$par
         SE_SF[i,] = 1/sqrt(out_SF$hessian)
       }  else {
-        notes_i = paste0(notes_i, " Scoring procedure for SF scale did not converge; SF score not provided.")
+        notes_i = paste0(notes_i, "Scoring procedure for SF scale did not converge; SF score not provided.")
       }
     }
 
@@ -208,7 +214,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
         MAP_OVERALL[i,] = out_OVERALL$par
         OVERALL_SE[i,] = 1/sqrt(out_OVERALL$hessian)
       } else {
-        notes_i = paste0(notes_i, " Scoring procedure for OVERALL scale did not converge; OVERALL score not produced.")
+        notes_i = paste0(notes_i, "Scoring procedure for OVERALL scale did not converge; OVERALL score not produced.")
       }
 
 
@@ -245,7 +251,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
         # scale_i =  X_4[i,] %*% as.matrix(normcoef_sd)
         # Z_LF[i,1:4] = (MAP_LF[i,]+50-center_i[1,1:4])/scale_i[1,1:4]
       } else {
-        notes_i = paste0(notes_i, " Multidimensional scoring procedure scale did not converge; subscores not produced.")
+        notes_i = paste0(notes_i, "Multidimensional scoring procedure scale did not converge; subscores not produced.")
       }
 
     }
@@ -297,7 +303,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
   }
 
   #Write out the output df
-  output_df = left_join(x = input_df, y = output_scored, by = "ID") #re-merge with original data.
+  output_df = left_join(x = input_df, y = output_scored) #re-merge with original data.
 
     # Write out the data
   if(interactive == TRUE){
