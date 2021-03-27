@@ -29,5 +29,5 @@ which_scores<-function(Yi, mest_df, min_items){
                     COG = J_cog_i>=min_items,
                     LANG = J_lang_i>=min_items,
                     SEM = J_lang_i>=min_items,
-                    OVERALL = J_overall_i>min_items))
+                    OVERALL = J_overall_i>=min_items))
 }

@@ -67,8 +67,11 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
     input_df <- input_df %>%
       mutate(ID = id)
   }
+  #Use the clean function to clean the DF
+  # input_df <- normsamp.full
+  # reverse_code <- TRUE
+  # min_items <- 5
 
-  #USe the clean function to clean the DF
   list_cleaned = clean(input_df = input_df, mest_df = mest_df, reverse_code = reverse_code,
                        interactive = interactive, log = log, min_items = min_items)
   log = list_cleaned$log
@@ -159,21 +162,22 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
       scales_i[-1] <- F
     }
 
-    notes_i = paste0("ID = ", cleaned_df$ID[i],": ")
+    notes_i = ""
+
     if(prod(as.numeric(scales_i[1,]))==0){
       if(list_cleaned$is_sf){
         notes_i = paste0(notes_i, "Only responses to short form items detected. Therefore, scoring will produce only a CREDI-SF score.")
         if (scales_i$SF==F){
-          notes_i = paste0(notes_i, "Fewer than the number of responses (", min_items,") needed to produce a score.")
+          notes_i = paste0(notes_i, "Warning: Fewer than ", min_items," were recorded for this observation. No score generated.")
         }
       } else {
-        notes_i = paste0(notes_i, "The following scales did not have at least ", min_items," responses: ", paste0(names(scales_i)[scales_i[1,]==FALSE], collapse = ", "),"." )
+        notes_i = paste0(notes_i, "The following domains did not have at least ", min_items," observed for this observation and may be innacurate: ", paste0(names(scales_i)[scales_i[1,]==FALSE], collapse = ", "),"." )
       }
 
     }
 
     #Calculate short form scores, as appropriate
-    if(scales_i$SF==TRUE | is_sf == TRUE){
+    if(scales_i$SF==TRUE | is_sf == TRUE | scales_i$OVERALL == TRUE){
 
       js_SF = which(names(Y[i,]) %in% mest_df[mest_df$ShortForm==TRUE,"CREDI_code"])
       out_SF = optim(par = as.vector(THETA0_SF[i,]),
@@ -220,8 +224,8 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
 
     }
 
-    # Calcuate long form, domain specific subscores
-    if(with(scales_i, MOT==T | COG==T | LANG == T | SEM == T)){
+    # Calculate long form, domain specific subscores
+    if(with(scales_i, MOT==T | COG==T | LANG == T | SEM == T | OVERALL == T)){
 
       out_LF = optim(par = as.vector(THETA0_LF[i,]),
                      fn = lf_posterior_density,
@@ -240,16 +244,6 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
         MAP_LF[i,] = out_LF$par
         SE_LF[i,] = sqrt(diag(solve(out_LF$hessian,diag(K))))
 
-        #Nullify scores for which there are too few items responded in domain
-        if(scales_i$MOT==FALSE){MAP_LF[i,"MOT"]<-SE_LF[i,"MOT"]<-NA}
-        if(scales_i$COG==FALSE){MAP_LF[i,"COG"]<-SE_LF[i,"COG"]<-NA}
-        if(scales_i$LANG==FALSE){MAP_LF[i,"LANG"]<-SE_LF[i,"LANG"]<-NA}
-        if(scales_i$SEM==FALSE){MAP_LF[i,"SEM"]<-SE_LF[i,"SEM"]<-NA}
-
-        # Obtain the standardized estimates (OLD METHOD)
-        # center_i = X_4[i,] %*% as.matrix(normcoef_mean)
-        # scale_i =  X_4[i,] %*% as.matrix(normcoef_sd)
-        # Z_LF[i,1:4] = (MAP_LF[i,]+50-center_i[1,1:4])/scale_i[1,1:4]
       } else {
         notes_i = paste0(notes_i, "Multidimensional scoring procedure scale did not converge; subscores not produced.")
       }
@@ -272,10 +266,6 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
   # Clean up the MAP_SF and SE_SF
   MAP_SF = data.frame(SF = round(MAP_SF,3)+50)
   SE_SF = data.frame(SF_SE = round(SE_SF,3))
-
-  #Clean the standardized estimates
-  # Z_LF = data.frame(round(Z_LF,3))
-  # names(Z_LF) = paste("z_",names(Z_LF), sep = "")
 
   # Put in the input depending on whether dataset is SF or LF
   output_scored = cbind(data.frame(ID = cleaned_df$ID), MAP_LF, SE_LF, MAP_SF, SE_SF, NOTES)
@@ -303,9 +293,9 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
   }
 
   #Write out the output df
-  output_df = left_join(x = input_df, y = output_scored) #re-merge with original data.
+  output_df = merge(x = input_df, y = output_scored, by = "ID") #re-merge with original data.
 
-    # Write out the data
+  # Write out the data
   if(interactive == TRUE){
     out_dlgDir = dlgSave(default = csv_wd, title = "Save scores as", gui = .GUI)
     out_csv = paste(strsplit(out_dlgDir$res,"/")[[1]],collapse = "/")

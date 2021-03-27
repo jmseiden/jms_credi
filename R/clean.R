@@ -218,7 +218,7 @@ clean<-function(input_df, mest_df, reverse_code, interactive, log, min_items){
     if (length(rows_toofew_y)>0){
       log[[length(log)+1]] =
         paste("Warning:  The following ", length(rows_toofew_y) ," observation(s) contain less than ", min_items," non-missing item responses and will not be scored:\n  ID = ", paste(input_df$ID[rows_toofew_y], collapse = ", "), sep = "")
-      dr = dr+1; discard_df$Reason[dr] = "Less than 5 item responses"; discard_df$Number[dr] = length(rows_toofew_y)
+      dr = dr+1; discard_df$Reason[dr] = paste("Less than ", min_items, " item responses", sep = ""); discard_df$Number[dr] = length(rows_toofew_y)
       input_df = input_df[-rows_toofew_y, ]
     }
   }
