@@ -8,7 +8,7 @@
 #' @export
 #' @examples
 
-which_scores<-function(Yi, mest_df, min_items){
+which_scores<-function(Yi, mest_df = mest_df, min_items = min_items){
 
   #Identify items answered
   yes_items_i = names(Yi[Yi==1])

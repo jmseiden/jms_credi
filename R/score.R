@@ -25,7 +25,7 @@
 # interactive = FALSE
 # data = input_df
 
-score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items = 5){
+score <- function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items = 5){
 
   # Identify if dialog specifying .csv file should be bypassed.
   bypass = ifelse(is.null(data), FALSE, TRUE)
@@ -67,11 +67,8 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
     input_df <- input_df %>%
       mutate(ID = id)
   }
-  #Use the clean function to clean the DF
-  # input_df <- normsamp.full
-  # reverse_code <- TRUE
-  # min_items <- 5
 
+  #Use the clean function to clean the DF
   list_cleaned = clean(input_df = input_df, mest_df = mest_df, reverse_code = reverse_code,
                        interactive = interactive, log = log, min_items = min_items)
   log = list_cleaned$log
@@ -154,6 +151,15 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
   writeLines(paste("\nScoring ", N, " observations:"))
   pb<-txtProgressBar(min = 0, max = N, initial = 0, style = 3)
 
+  #Get the flags for the domain scores
+  get.flags <- function(x){
+    dat <- as.numeric(!which_scores(Y[x,], mest_df, min_items))
+    names(dat) <- c("SF_flag", "MOT_flag", "COG_flag", "LANG_flag", "SEM_flag", "OVERALL_flag")
+    return(dat)
+  }
+
+  FLAGS <- t(sapply(1:nrow(Y), get.flags))
+
 #i = 1
   for (i in 1:N){
 
@@ -177,7 +183,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
     }
 
     #Calculate short form scores, as appropriate
-    if(scales_i$SF==TRUE | is_sf == TRUE | scales_i$OVERALL == TRUE){
+    if(scales_i$SF == TRUE | is_sf == TRUE | scales_i$OVERALL == TRUE){
 
       js_SF = which(names(Y[i,]) %in% mest_df[mest_df$ShortForm==TRUE,"CREDI_code"])
       out_SF = optim(par = as.vector(THETA0_SF[i,]),
@@ -268,7 +274,7 @@ score<-function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items 
   SE_SF = data.frame(SF_SE = round(SE_SF,3))
 
   # Put in the input depending on whether dataset is SF or LF
-  output_scored = cbind(data.frame(ID = cleaned_df$ID), MAP_LF, SE_LF, MAP_SF, SE_SF, NOTES)
+  output_scored = cbind(data.frame(ID = cleaned_df$ID), MAP_LF, SE_LF, MAP_SF, SE_SF, FLAGS, NOTES)
 
   # Calculate in the standardized estimates
   AGE <- cleaned_df %>%
