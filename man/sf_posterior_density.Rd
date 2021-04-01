@@ -4,8 +4,16 @@
 \alias{sf_posterior_density}
 \title{Posterior density for short form CREDI scale.}
 \usage{
-sf_posterior_density(THETAi, Yi, MUi, SIGMA_SQi, DELTA, ALPHA, J,
-  weight = NULL)
+sf_posterior_density(
+  THETAi,
+  Yi,
+  MUi,
+  SIGMA_SQi,
+  DELTA,
+  ALPHA,
+  J,
+  weight = NULL
+)
 }
 \arguments{
 \item{THETAi}{Scalar representing scaled score for the i-th individual.}

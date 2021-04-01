@@ -1,11 +1,13 @@
 #' Score CREDI response data
 #'
-#' This calculates the posterior density function.
+#' This calculates the posterior density function and provides CREDI Overall, Short Form, and domain-specific scores. 
+#' 
+#' The score function takes in data named according to CREDI conventions and requires a unique ID variables and AGE variable. Only scores with a non-missing AGE variable will be scored. 
+#' 
 #' @param data (data.frame) Defaults to NULL. Response data. If NULL, then user is prompted to identify a .csv file with response data. Defaults to NULL.
-#' @param reverse_code (Logical) Defaults to TRUE. If TRUE, then reverse coding is automated to appropriately handle the negatively worded items LF9, LF102, LFMH1, LFMH2, LFMH3, LFMH4, LFMH5, LFMH7, LFMH8, & LFMH9. If FALSE, then no reverse coding is applied.
+#' @param reverse_code (Logical) Defaults to TRUE. If TRUE, then reverse coding is automated to appropriately handle the negatively worded items LF9, LF102, LFMH1, LFMH2, LFMH3, LFMH4, LFMH5, LFMH7, LFMH8, & LFMH9. If FALSE, then the package assumes items are already reverse coded and no changes are applied prior to scoring.
 #' @param interactive (Logical) Defaults to TRUE. If TRUE, the user may be prompted with caution messages regarding whether scoring should be continued, where to save the scores, where to save a logfile, etc. If FALSE, continuation is assumed and scores and the user is not prompted to save scores or a logfile.
-#' @param min_items (integer) Default to 5. The minimum number of scale-specific items (e.g., SF, MOT, etc.) required for a score to be calculated.
-#' @keywords CREDI
+#' @param min_items (integer) Defaults to 5. The minimum number of scale-specific items (e.g., SF, MOT, etc.) required for a score to be calculated.
 #' @importFrom magrittr %>%
 #' @importFrom readr read_csv
 #' @importFrom readr write_csv
@@ -18,12 +20,17 @@
 #' @importFrom tibble rownames_to_column
 #' @export
 #' @examples
-#' score()
-
-# reverse_code = FALSE
-# save_logfile = TRUE
-# interactive = FALSE
-# data = input_df
+#' 
+#' dat <- data.frame(ID = 1:3, AGE = c(3,5,4), LF1 = c(1,0,NA) , LF2 = c(0,0,0), LF3 = c(1,0,1), LF4 = c(1,1,1), LF5 = (1,0,0))
+#' 
+#' scored_dat <- score(data = NULL, reverse_code = FALSE, interactive = FALSE, min_items = 5)
+#' 
+#' #Print out domain scores:
+#' scored_dat$scores[,c("SF", "MOT", "LANG", "SEM", "COG", "OVERALL")]
+#' SF    MOT   LANG    SEM    COG OVERALL
+#' 1 41.204 43.489 45.968 44.626 45.091  40.079
+#' 2 42.917 42.058 45.049 43.755 44.250  38.16
+#' #One observation did not have at least 5 items responded to, so is not included in the results
 
 score <- function(data = NULL, reverse_code = TRUE, interactive = TRUE, min_items = 5){
 

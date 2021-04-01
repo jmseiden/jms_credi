@@ -4,7 +4,7 @@
 \alias{clean}
 \title{Clean input CREDI response data}
 \usage{
-clean(input_df, mest_df, reverse_code, interactive, log)
+clean(input_df, mest_df, reverse_code, interactive, log, min_items)
 }
 \arguments{
 \item{input_df}{(data.frame) Raw input data from the user-specified csv file.}
@@ -14,6 +14,8 @@ clean(input_df, mest_df, reverse_code, interactive, log)
 \item{reverse_code}{(logical). If TRUE, then reverse codes LF9, LF102, LFMH1, LFMH2, LFMH3, LFMH4, LFMH5, LFMH7, LFMH8, & LFMH9. If FALSE, then no reverse coding is applied.}
 
 \item{log}{(string) Name of the *.txt log file for the CREDI scoring.}
+
+\item{min_items}{(integer) Default to 5. The minimum number of scale-specific items (e.g., SF, MOT, etc.) required for a score to be calculated.}
 
 \item{csv_wd}{(string) Working directory where input *.csv file is located.}
 }
